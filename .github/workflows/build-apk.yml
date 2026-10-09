@@ -19,26 +19,36 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Build APK via Cordova
+      - name: Setup Web Directory & Wrapper
         run: |
-          npm install -g cordova
-          cordova create pragya-app com.harshit.pragyaproduction "Pragya Production"
-          cd pragya-app
-          rm -rf www/*
-          cp ../index.html www/
-          cordova platform add android@12.0.1
-          cordova build android --debug
+          mkdir -p android-app/app/src/main/assets
+          mkdir -p android-app/app/src/main/res/values
+          cp index.html android-app/app/src/main/assets/
 
-      - name: Upload APK Artifact
+      - name: Build Webview Android APK
+        uses: ammarahm-ed/android-builder@v1.0.3
+        with:
+          project_dir: '.'
+          
+      - name: Fallback Direct Fast Build
+        if: failure()
+        run: |
+          npm install -g @bubblewrap/cli
+          yes | bubblewrap init --manifest="https://raw.githubusercontent.com/dummy/dummy/main/manifest.json" || true
+
+      - name: Build Standalone APK
+        run: |
+          git clone https://github.com/hiteshsahu/Webview-App-Template.git app-template
+          cp index.html app-template/app/src/main/assets/index.html
+          cd app-template
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload Pragya Production APK
         uses: actions/upload-artifact@v4
         with:
           name: Pragya-Production-APK
-          path: pragya-app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: app-template/app/build/outputs/apk/debug/app-debug.apk

@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <!-- Date, Carry Forward & History Bar -->
+    <!-- Date & Auto Carry -->
     <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-800">
       <div>
         <label class="text-[10px] text-slate-400 block mb-0.5">Production Date</label>
@@ -55,7 +55,7 @@
     </div>
   </header>
 
-  <!-- Live Production Summary -->
+  <!-- Live KPI Bar -->
   <div class="grid grid-cols-3 gap-2 mb-3">
     <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-2xl text-center">
       <div class="text-[9px] text-slate-400 uppercase font-bold">Total Intake</div>
@@ -74,7 +74,7 @@
     </div>
   </div>
 
-  <!-- Raw Intake Hodi -->
+  <!-- Stage 1: Intake Hodi -->
   <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-3">
     <div class="flex justify-between items-center mb-2">
       <h2 class="text-xs font-bold text-white uppercase tracking-wider">Stage 1: Hodi (Intake 1000 Bags)</h2>
@@ -82,7 +82,7 @@
     </div>
     <div class="grid grid-cols-2 gap-2">
       <div>
-        <label class="text-[10px] text-slate-400">Opening Intake (Bags)</label>
+        <label class="text-[10px] text-slate-400">Day Start (Bags)</label>
         <input type="number" id="hodiInitial" value="1000" class="w-full border border-slate-700 rounded-xl px-2.5 py-1.5 text-sm font-bold mt-1" oninput="calcTotals()">
       </div>
       <div>
@@ -96,7 +96,7 @@
     <div id="addonTags" class="flex flex-wrap gap-1 mt-2"></div>
   </section>
 
-  <!-- Hoppers Container -->
+  <!-- Dynamic Hoppers Container -->
   <div id="hoppersContainer" class="space-y-3 mb-3"></div>
 
   <!-- Truck Dispatch -->
@@ -125,7 +125,7 @@
     <div id="byProductsList" class="space-y-2"></div>
   </section>
 
-  <!-- Day History, Edit & Delete Panel -->
+  <!-- History & Edit/Delete Panel -->
   <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-3">
     <div class="flex items-center justify-between mb-2">
       <h2 class="text-xs font-bold text-white uppercase tracking-wider">📁 Saved Day Records & History</h2>
@@ -212,7 +212,6 @@
     let curPlant = "MOGAR";
     let addOns = [];
     let dispatches = [];
-    let byProductsData = {};
 
     document.getElementById("prodDate").value = new Date().toISOString().split("T")[0];
 
@@ -223,8 +222,8 @@
 
     function switchPlant(plant) {
       curPlant = plant;
-      document.getElementById("btnMogar").className = plant === 'MOGAR' ? 'py-2 rounded-xl text-xs font-black uppercase bg-emerald-600 text-white' : 'py-2 rounded-xl text-xs font-black uppercase bg-slate-800 text-slate-400';
-      document.getElementById("btnDal").className = plant === 'DAL' ? 'py-2 rounded-xl text-xs font-black uppercase bg-amber-600 text-white' : 'py-2 rounded-xl text-xs font-black uppercase bg-slate-800 text-slate-400';
+      document.getElementById("btnMogar").className = plant === 'MOGAR' ? 'py-2 rounded-xl text-xs font-black uppercase bg-emerald-600 text-white transition' : 'py-2 rounded-xl text-xs font-black uppercase bg-slate-800 text-slate-400 transition';
+      document.getElementById("btnDal").className = plant === 'DAL' ? 'py-2 rounded-xl text-xs font-black uppercase bg-amber-600 text-white transition' : 'py-2 rounded-xl text-xs font-black uppercase bg-slate-800 text-slate-400 transition';
       renderHoppers();
       renderByProducts();
       updateTruckHopperOptions();
@@ -311,7 +310,6 @@
       const qtl = (bags * kg / 100).toFixed(1);
       dispatches.push({ truck, hop, bags, kg, grade, qtl });
 
-      // Deduct from hopper
       const inputEl = document.getElementById("h_" + hop);
       if(inputEl) {
         inputEl.value = Math.max(0, (parseInt(inputEl.value) || 0) - bags);
@@ -370,7 +368,6 @@
       const dt = document.getElementById("prodDate").value;
       const key = getKey(dt, curPlant);
 
-      // Collect hoppers
       const hoppers = {};
       CONFIG[curPlant].forEach(sec => {
         sec.hoppers.forEach(h => {
@@ -383,7 +380,6 @@
         });
       });
 
-      // Collect by-products
       const byProds = {};
       BY_PRODS[curPlant].forEach(bp => {
         const el = document.getElementById("bp_" + bp);
@@ -417,7 +413,6 @@
         addOns = d.addOns || [];
         dispatches = d.dispatches || [];
 
-        // Load hoppers
         if (d.hoppers) {
           Object.keys(d.hoppers).forEach(id => {
             const bEl = document.getElementById("h_" + id);
@@ -427,7 +422,6 @@
           });
         }
 
-        // Load by-products
         if (d.byProds) {
           Object.keys(d.byProds).forEach(bp => {
             const el = document.getElementById("bp_" + bp);
@@ -435,7 +429,6 @@
           });
         }
       } else {
-        // Reset to defaults
         addOns = [];
         dispatches = [];
         document.getElementById("hodiInitial").value = 1000;
@@ -454,7 +447,7 @@
     }
 
     function deleteRecord(key) {
-      if (confirm("Are you sure you want to delete this day's record?")) {
+      if (confirm("Are you sure you want to delete this record?")) {
         localStorage.removeItem(key);
         loadDayData();
       }
@@ -507,7 +500,7 @@
       const dispQ = document.getElementById("dispDispatchQtl").innerText;
       const rec = document.getElementById("dispRecovery").innerText;
 
-      let msg = `*PRAGYA PRODUCTS - DAILY PRODUCTION REPORT*\n`;
+      let msg = `*PRAGYA PRODUCTS - PRODUCTION REPORT*\n`;
       msg += `👤 Made by: Harshit\n`;
       msg += `📅 Date: ${dt}\n`;
       msg += `🏭 Plant: ${curPlant === 'MOGAR' ? 'Moong Mogar Plant' : 'Moong Dal Plant'}\n`;
@@ -525,7 +518,7 @@
         msg += `-----------------------------\n`;
       }
 
-      msg += `_Generated from Pragya Production App_`;
+      msg += `_Pragya Production App_`;
 
       const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");

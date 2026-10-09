@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -22,33 +22,17 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Web Directory & Wrapper
+      - name: Clone Webview Template & Inject Pragya App
         run: |
-          mkdir -p android-app/app/src/main/assets
-          mkdir -p android-app/app/src/main/res/values
-          cp index.html android-app/app/src/main/assets/
-
-      - name: Build Webview Android APK
-        uses: ammarahm-ed/android-builder@v1.0.3
-        with:
-          project_dir: '.'
-          
-      - name: Fallback Direct Fast Build
-        if: failure()
-        run: |
-          npm install -g @bubblewrap/cli
-          yes | bubblewrap init --manifest="https://raw.githubusercontent.com/dummy/dummy/main/manifest.json" || true
-
-      - name: Build Standalone APK
-        run: |
-          git clone https://github.com/hiteshsahu/Webview-App-Template.git app-template
-          cp index.html app-template/app/src/main/assets/index.html
-          cd app-template
+          git clone --depth 1 https://github.com/swayangjit/Webview-App-Template.git android-project
+          mkdir -p android-project/app/src/main/assets
+          cp index.html android-project/app/src/main/assets/index.html
+          cd android-project
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload Pragya Production APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Pragya-Production-APK
-          path: app-template/app/build/outputs/apk/debug/app-debug.apk
+          path: android-project/app/build/outputs/apk/debug/app-debug.apk
